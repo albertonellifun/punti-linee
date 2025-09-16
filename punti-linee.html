@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Punti e Linee</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: #fff;
+      background-image:
+        linear-gradient(to right, #cce0ff 1px, transparent 1px),
+        linear-gradient(to bottom, #cce0ff 1px, transparent 1px);
+      background-size: 24px 24px;
+      padding: 20px;
+      text-align: center;
+	  display: flex;
+	  flex-direction: row;
+	  gap: 20px;
+    }
+
+    
+
+    #controls {
+      display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  white-space: nowrap;
+	  flex: 1;
+	  border: 1px solid red;
+	  width: 240px;
+	  max-width: 240px;
+    }
+
+    #start-btn {
+      padding: 6px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+	
+	#status {
+      font-size: 16px;
+    }
+
+    #scoreboard {
+      font-size: 14px;
+	  text-align: left;
+	  margin: 0 auto;
+    }
+
+    #scoreboard span {
+      font-weight: bold;
+    }
+
+    #game-container {
+      display: grid;
+      grid-template-columns: repeat(9, 24px);
+      grid-auto-rows: 24px;
+      justify-content: center;
+	  flex: 1;
+	  border: 1px solid blue;
+	  min-height: 250px;
+	  padding-top: 3%;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background-color: black;
+      border-radius: 50%;
+      margin: auto;
+    }
+
+    .line {
+      background-color: transparent;
+      cursor: pointer;
+    }
+
+    .line.horizontal {
+      width: 42px;
+      height: 3px;
+      margin: auto -10px;
+    }
+
+    .line.vertical {
+      width: 3px;
+      height: 42px;
+      margin: -10px auto;
+    }
+
+    .line.red {
+      background-color: red;
+    }
+
+    .line.blue {
+      background-color: blue;
+    }
+
+    .box {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: -10px -10px;
+    }
+
+    .box.red {
+      background-color: rgba(255, 0, 0, 0.15);
+      background-image: repeating-linear-gradient(
+        45deg,
+        red,
+        red 3px,
+        transparent 3px,
+        transparent 9px
+      );
+    }
+
+    .box.blue {
+      background-color: rgba(0, 0, 255, 0.15);
+      background-image: repeating-linear-gradient(
+        135deg,
+        blue,
+        blue 3px,
+        transparent 3px,
+        transparent 9px
+      );
+    }
+	
+	@media (orientation: portrait) {
+      body {
+        flex-direction: column;
+        align-items: center;
+      }
+      #game-container, #controls {
+        width: 100%;
+        max-width: 400px;
+		padding-top: 6%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container"></div>
+  <div id="controls">
+    <p>Punti e Linee</p>
+    <button id="start-btn">START &#9654;</button>
+    <p id="status">Turno: <span id="turn">—</span></p>
+    <div id="scoreboard">
+        <p>🔴 Giocatore: <span id="score-red">0</span></p>
+        <p>🔵 AI: <span id="score-blue">0</span></p>
+    </div>
+  </div>
+
+  <script>
+    const container = document.getElementById('game-container');
+    const turnDisplay = document.getElementById('turn');
+    const scoreRedEl = document.getElementById('score-red');
+    const scoreBlueEl = document.getElementById('score-blue');
+    const startBtn = document.getElementById('start-btn');
+
+    let currentPlayer = 'red';
+    let lines = {};
+    let boxes = {};
+    let scores = { red: 0, blue: 0 };
+    const size = 4;
+	let gameOver = false;
+
+    startBtn.addEventListener('click', startGame);
+
+    function startGame() {
+      container.innerHTML = '';
+      lines = {};
+      boxes = {};
+      scores = { red: 0, blue: 0 };
+	  gameOver = false;
+      currentPlayer = 'red';
+      updateScores();
+      turnDisplay.textContent = 'Giocatore';
+      createBoard();
+    }
+
+    function createBoard() {
+      for (let r = 0; r < size * 2 + 1; r++) {
+        for (let c = 0; c < size * 2 + 1; c++) {
+          const cell = document.createElement('div');
+          if (r % 2 === 0 && c % 2 === 0) {
+            cell.className = 'dot';
+          } else if (r % 2 === 0 || c % 2 === 0) {
+            const id = `r${r}c${c}`;
+            cell.className = 'line';
+            if (r % 2 === 0) cell.classList.add('horizontal');
+            else cell.classList.add('vertical');
+            cell.setAttribute('data-id', id);
+            cell.addEventListener('click', () => handleClick(id, cell, true));
+            lines[id] = null;
+          } else {
+            const boxId = `r${r}c${c}`;
+            cell.className = 'box';
+            cell.setAttribute('data-box', boxId);
+            boxes[boxId] = { filled: false, owner: null, element: cell };
+          }
+          container.appendChild(cell);
+        }
+      }
+    }
+
+    function handleClick(id, element, isHuman) {
+	  if (gameOver) return;
+	  if (!element) return;
+	  
+	  if(currentPlayer == 'red' && !isHuman) return;
+	  if(currentPlayer == 'blue' && isHuman) return;
+	  
+	  if (lines[id]) return;
+
+      lines[id] = currentPlayer;
+      element.classList.add(currentPlayer);
+
+      const completed = checkBoxes(id);
+	  
+	  updateScores();
+	  
+      if (!completed) {
+		//no quadrato -> cambio giocatore
+	    switchTurn();
+	  }
+	  else {
+	    checkGameEnd(); // ← verifica fine partita anche se il turno non cambia
+        if (!gameOver && currentPlayer === 'blue') {
+          setTimeout(aiMove, 500);
+        }
+	  }
+    }
+	
+
+    function switchTurn() {
+	  checkGameEnd();
+	
+      currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+      turnDisplay.textContent = currentPlayer === 'red' ? 'Giocatore' : 'AI';
+      if (currentPlayer === 'blue') setTimeout(aiMove, 500);
+    }
+
+    function checkBoxes(lineId) {
+      let completed = false;
+      for (const boxId in boxes) {
+        if (boxes[boxId].filled) continue;
+        const [r, c] = boxId.match(/\d+/g).map(Number);
+        const top = `r${r - 1}c${c}`;
+        const bottom = `r${r + 1}c${c}`;
+        const left = `r${r}c${c - 1}`;
+        const right = `r${r}c${c + 1}`;
+        if (lines[top] && lines[bottom] && lines[left] && lines[right]) {
+          boxes[boxId].filled = true;
+          boxes[boxId].owner = currentPlayer;
+          boxes[boxId].element.classList.add(currentPlayer);
+          scores[currentPlayer]++;
+          updateScores();
+          completed = true;
+        }
+      }
+      return completed;
+    }
+
+    function updateScores() {
+      scoreRedEl.textContent = scores.red;
+      scoreBlueEl.textContent = scores.blue;
+    }
+
+	//AI -> pessima
+    function aiMove() {
+      // 1. Cerca di completare un quadrato
+      const completeMove = findCompletableBoxMove();
+      if (completeMove) {
+        const el = document.querySelector(`[data-id="${completeMove}"]`);
+        handleClick(completeMove, el, false);
+        return;
+      }
+    
+      // 2. Evita di creare il terzo lato di una casella
+      const safeMoves = Object.keys(lines).filter(id => {
+        if (lines[id]) return false;
+        return !wouldCreateThirdSide(id);
+      });
+    
+      const move = safeMoves.length > 0
+        ? safeMoves[Math.floor(Math.random() * safeMoves.length)]
+        : Object.keys(lines).find(id => !lines[id]);
+    
+      const el = document.querySelector(`[data-id="${move}"]`);
+      handleClick(move, el, false);
+    }
+	
+	function findCompletableBoxMove() {
+      for (const boxId in boxes) {
+        if (boxes[boxId].filled) continue;
+        const [r, c] = boxId.match(/\d+/g).map(Number);
+        const sides = [
+          `r${r - 1}c${c}`,
+          `r${r + 1}c${c}`,
+          `r${r}c${c - 1}`,
+          `r${r}c${c + 1}`
+        ];
+        const filled = sides.filter(s => lines[s]);
+        if (filled.length === 3) {
+          return sides.find(s => !lines[s]);
+        }
+      }
+      return null;
+    }
+    
+    function wouldCreateThirdSide(lineId) {
+      const affectedBoxes = [];
+      for (const boxId in boxes) {
+        if (boxes[boxId].filled) continue;
+        const [r, c] = boxId.match(/\d+/g).map(Number);
+        const sides = [
+          `r${r - 1}c${c}`,
+          `r${r + 1}c${c}`,
+          `r${r}c${c - 1}`,
+          `r${r}c${c + 1}`
+        ];
+        if (sides.includes(lineId)) {
+          const filled = sides.filter(s => lines[s] || s === lineId);
+          if (filled.length === 3) return true;
+        }
+      }
+      return false;
+    }
+	
+	function checkGameEnd() {
+      const totalBoxes = Object.keys(boxes).length;
+      const filledBoxes = Object.values(boxes).filter(b => b.filled).length;
+    
+      if (filledBoxes === totalBoxes) {
+	    gameOver = true;
+        let winner;
+        if (scores.red > scores.blue) {
+          winner = '🔴 Giocatore vince!';
+        } else if (scores.blue > scores.red) {
+          winner = '🔵 AI vince!';
+        } else {
+          winner = '🤝 Pareggio!';
+        }
+    
+        setTimeout(() => {
+          alert(`Partita terminata!\n\n${winner}\n\nPunteggio: ${scores.red} - ${scores.blue}`);
+        }, 500);
+      }
+    }
+    
+    
+  </script>
+</body>
+</html>
