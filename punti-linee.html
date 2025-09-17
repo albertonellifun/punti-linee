@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <title>Punti e Linee</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
 
   <style>
     body {
       font-family: 'Courier New', monospace;
+	  font-weight: 700;
       background-color: #fff;
       background-image:
         linear-gradient(to right, #cce0ff 1px, transparent 1px),
@@ -27,18 +27,22 @@
       display: flex;
 	  flex-direction: column;
 	  align-items: center;
+	  justify-content: center;
 	  white-space: nowrap;
 	  flex: 1;
-	  border: 1px solid red;
+	  xxxborder: 1px solid red;
 	  width: 240px;
 	  max-width: 240px;
+	  min-width: 180px;
     }
 
     #start-btn {
-      padding: 6px 14px;
-      font-size: 14px;
+	  font-family: 'Courier New', monospace;
+	  font-weight: 700;
+      font-size: 16px;
+	  padding: 6px 24px;
       cursor: pointer;
-      background-color: #007bff;
+      background-color: #00f;
       color: white;
       border: none;
       border-radius: 4px;
@@ -49,7 +53,7 @@
     }
 
     #scoreboard {
-      font-size: 14px;
+      font-size: 16px;
 	  text-align: left;
 	  margin: 0 auto;
     }
@@ -64,7 +68,7 @@
       grid-auto-rows: 24px;
       justify-content: center;
 	  flex: 1;
-	  border: 1px solid blue;
+	  xxxborder: 1px solid blue;
 	  min-height: 250px;
 	  padding-top: 3%;
     }
@@ -144,18 +148,39 @@
 		padding-top: 6%;
       }
     }
+	
+	/* bordo tramite svg data uri */
+	.bic-box {
+      border: 8px solid transparent;
+      border-image: url("data:image/svg+xml;utf8,      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><!-- lato superiore --><path d='M2,5 Q20,2 40,6 T78,4 98,5' fill='none' stroke='red' stroke-width='2'/>        <!-- lato destro --><path d='M95,2 Q98,20 94,40 T96,78 95,98' fill='none' stroke='red' stroke-width='2'/>        <!-- lato inferiore --><path d='M2,95 Q20,98 40,94 T78,96 98,95' fill='none' stroke='blue' stroke-width='2'/>        <!-- lato sinistro --><path d='M5,2 Q2,20 6,40 T4,78 5,98' fill='none' stroke='blue' stroke-width='2'/>      </svg>") 40 stretch;
+    }
+	
+	/* segnaposti */
+	.minibox {
+	  width: 16px;
+      height: 16px;
+      margin: 0 8px;
+      display: inline-block;
+      vertical-align: middle;
+	}
+	.minibox.blue {
+	  border: 2px solid blue;
+	}
+	.minibox.red {
+	  border: 2px solid red;
+	}
   </style>
 </head>
 <body>
 
-  <div id="game-container"></div>
-  <div id="controls">
+  <div id="game-container" class="bic-box"></div>
+  <div id="controls" class="bic-box">
     <p>Punti e Linee</p>
-    <button id="start-btn">START &#9654;</button>
+    <button id="start-btn">Start &#9654;</button>
     <p id="status">Turno: <span id="turn">—</span></p>
     <div id="scoreboard">
-        <p>🔴 Giocatore: <span id="score-red">0</span></p>
-        <p>🔵 AI: <span id="score-blue">0</span></p>
+        <p><span class="minibox box red"></span>Giocatore: <span id="score-red">0</span></p>
+        <p><span class="minibox box blue"></span>AI: <span id="score-blue">0</span></p>
     </div>
   </div>
 
@@ -360,5 +385,4 @@
     
   </script>
 </body>
-
 </html>
