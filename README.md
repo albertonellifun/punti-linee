@@ -1,5 +1,5 @@
-# Punti e Linee
-Punti e Linee (Dots and Lines) game in HTML CSS and JavaScript Legacy 
+# Punti e Linee (Dots and Boxes)
+Punti e Linee (Dots and Boxes) game in HTML CSS and JavaScript Legacy 
 
 ## Licenza
 
